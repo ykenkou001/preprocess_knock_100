@@ -466,7 +466,8 @@ df_customer %>%
 class(df_customer$application_date)
 df_customer %>%
     mutate(
-        application_date = as.character(.$application_date)) %>%
+        application_date = as.character(.$application_date)
+    ) %>%
     mutate(
         application_date = as.Date(.$application_date, format = "%Y%m%d")
     ) %>%
@@ -514,8 +515,8 @@ df_receipt %>%
 # とともに10件表示せよ。なお、「月」は0埋め2桁で取り出すこと。
 df_receipt %>%
     mutate(sales_ymd_date = format(
-        as.POSIXct(.$sales_epoch, origin = "1970-1-1"), "%m")) %>%
-    select(c("receipt_no","receipt_sub_no", "sales_ymd_date")) %>%
+        as.POSIXct(.$sales_epoch, origin = "1970-1-1"), "%m"
+    )) %>%
+    select(c("receipt_no", "receipt_sub_no", "sales_ymd_date")) %>%
     head()
-
 ## P-050 ## ------------------------------------------------------------------

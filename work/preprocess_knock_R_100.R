@@ -148,9 +148,10 @@ df_receipt %>%
   group_by(customer_id) %>%
   summarise(sum_amt = sum(amount), .groups = "drop") %>%
   mutate(norm = scale(
-    sum_amt, 
-    center = min(sum_amt), 
-    scale = max(sum_amt) - min(sum_amt))) %>%
+    sum_amt,
+    center = min(sum_amt),
+    scale = max(sum_amt) - min(sum_amt)
+  )) %>%
   head()
 ## ----------------------------------------------------------------------------
 
@@ -158,5 +159,119 @@ df_receipt %>%
 # レシート明細データ（df_receipt）の売上金額（amount）を顧客ID（customer_id）ごとに
 # 合計し、売上金額合計を常用対数化（底10）して顧客ID、売上金額合計とともに10件表示せよ。
 # ただし、顧客IDが"Z"から始まるのものは非会員を表すため、除外して計算すること。
+df_receipt %>%
+  filter(substr(customer_id, 1, 1) != "Z") %>%
+  group_by(customer_id) %>%
+  summarise(sum_amt = sum(amount), .groups = "drop") %>%
+  mutate(log = log(sum_amt, 10)) %>%
+  head()
+## ----------------------------------------------------------------------------
 
+## r-062: ## ------------------------------------------------------------------
+# レシート明細データ（df_receipt）の売上金額（amount）を顧客ID（customer_id）ごとに
+# 合計し、売上金額合計を自然対数化（底e）して顧客ID、売上金額合計とともに10件表示せよ。
+# ただし、顧客IDが"Z"から始まるのものは非会員を表すため、除外して計算すること。
+df_receipt %>%
+  filter(substr(customer_id, 1, 1) != "Z") %>%
+  group_by(customer_id) %>%
+  summarise(sum_amt = sum(amount), .groups = "drop") %>%
+  mutate(exp_sum_amt = log(sum_amt)) %>%
+  head()
+## ----------------------------------------------------------------------------
+
+## r-063: ## ------------------------------------------------------------------
+# 商品データ（df_product）の単価（unit_price）と原価（unit_cost）から
+# 各商品の利益額を算出し、結果を10件表示せよ。
+df_product %>%
+  mutate(profit = unit_price - unit_cost) %>%
+  select(unit_price, unit_cost, profit) %>%
+  head()
+## ----------------------------------------------------------------------------
+
+## r-064: ## ------------------------------------------------------------------
+# 商品データ（df_product）の単価（unit_price）と原価（unit_cost）から、
+# 各商品の利益率の全体平均を算出せよ。ただし、単価と原価には欠損が生じていることに注意せよ。
+df_product %>%
+  mutate(profit_rate = (unit_price - unit_cost) / unit_price * 100) %>%
+  summarise(mean = mean(profit_rate, na.rm = TRUE))
+## ----------------------------------------------------------------------------
+
+## r-065: ## ------------------------------------------------------------------
+# 商品データ（df_product）の各商品について、利益率が30%となる新たな単価を求めよ。
+# ただし、1円未満は切り捨てること。そして結果を10件表示させ、
+# 利益率がおよそ30％付近であることを確認せよ。
+# ただし、単価（unit_price）と原価（unit_cost）には欠損が生じていることに注意せよ。
+df_product %>%
+  na.omit(unit_price, unit_cost) %>%
+  mutate(
+    new_unit_price = trunc((unit_cost) / 0.7),
+    check = (new_unit_price - unit_cost) / new_unit_price
+  ) %>%
+  select(unit_price, unit_cost, new_unit_price, check) %>%
+  head()
+## ----------------------------------------------------------------------------
+
+## r-066: ## ------------------------------------------------------------------
+# 商品データ（df_product）の各商品について、利益率が30%となる新たな単価を求めよ。
+# 今回は、1円未満を丸めること（四捨五入または偶数への丸めで良い）。
+# そして結果を10件表示させ、利益率がおよそ30％付近であることを確認せよ。
+# ただし、単価（unit_price）と原価（unit_cost）には欠損が生じていることに注意せよ。
+df_product %>%
+  na.omit(unit_price, unit_cost) %>%
+  mutate(
+    new_unit_price = round((unit_cost) / 0.7),
+    check = (new_unit_price - unit_cost) / new_unit_price
+  ) %>%
+  select(unit_price, unit_cost, new_unit_price, check) %>%
+  head()
+## ----------------------------------------------------------------------------
+
+## r-067: ## ------------------------------------------------------------------
+# 商品データ（df_product）の各商品について、利益率が30%となる新たな単価を求めよ。
+# 今回は、1円未満を切り上げること。そして結果を10件表示させ、
+# 利益率がおよそ30％付近であることを確認せよ。
+# ただし、単価（unit_price）と原価（unit_cost）には欠損が生じていることに注意せよ。
+df_product %>%
+  na.omit(unit_price, unit_cost) %>%
+  mutate(
+    new_unit_price = ceiling((unit_cost) / 0.7),
+    check = (new_unit_price - unit_cost) / new_unit_price
+  ) %>%
+  select(unit_price, unit_cost, new_unit_price, check) %>%
+  head()
+## ----------------------------------------------------------------------------
+
+## r-068: ## ------------------------------------------------------------------
+# 商品データ（df_product）の各商品について、消費税率10％の税込み金額を求めよ。
+# 1円未満の端数は切り捨てとし、結果を10件表示せよ。
+# ただし、単価（unit_price）には欠損が生じていることに注意せよ。
+df_product %>%
+  na.omit(unit_price) %>%
+  mutate(
+    including_tax = trunc(unit_price * 1.1),
+    check = including_tax / unit_price
+  ) %>%
+  select(unit_price, including_tax, check) %>%
+  head()
+## ----------------------------------------------------------------------------
+
+## r-069: ## ------------------------------------------------------------------
+# レシート明細データ（df_receipt）と商品データ（df_product）を結合し、
+# 顧客毎に全商品の売上金額合計と、カテゴリ大区分コード（category_major_cd）が
+# "07"（瓶詰缶詰）の売上金額合計を計算の上、両者の比率を求めよ。
+# 抽出対象はカテゴリ大区分コード"07"（瓶詰缶詰）の売上実績がある顧客のみとし、結果を10件表示せよ。
+df_tmp_1 <- df_receipt %>%
+  group_by(customer_id) %>%
+  summarise(sum_all = sum(amount))
+
+df_tmp_2 <- inner_join(df_receipt,
+  df_product[c("product_cd", "category_major_cd")],
+  by = "product_cd") %>%
+  filter(category_major_cd == "07") %>%
+  group_by(customer_id) %>%
+  summarise(sum_07 = sum(amount), .groups = "drop")
+head(df_tmp_2)
+inner_join(df_tmp_1, df_tmp_2, by = "customer_id") %>%
+  mutate(sales_rate = sum_07 / sum_all) %>%
+  head()
 ## ----------------------------------------------------------------------------
